@@ -5,7 +5,7 @@ var http    = require('http'),
     io      = require('socket.io'),
     fs      = require('fs');
 
-var backlog_size = 5000;
+var backlog_size = 10000;
 var log_dir = process.argv.length > 2 ? process.argv[2] :  "/var/log/";
 var logs = [];
 // look up the dir for logs
@@ -30,7 +30,7 @@ server.listen(8000);
 
 // -- Setup Socket.IO ---------------------------------------------------------
 var io = io.listen(server);
-io.set('log level', 0);
+io.set('log level', 2);
 
 io.sockets.on('connection', function(client){
   var filename;
@@ -41,7 +41,7 @@ io.sockets.on('connection', function(client){
       fs.unwatchFile(filename);
       filename = log_dir + message.log;
       client.json.send({filename: filename});
-
+	  client.json.send({clear:true});
       // send some back log
       fs.stat(filename,function(err,stats){
         if (err) throw err;
