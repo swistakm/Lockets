@@ -3,6 +3,7 @@
 // ===================================
 var http    = require('http'),
     io      = require('socket.io'),
+    spawn   = require('child_process').spawn,    
     fs      = require('fs');
 
 var backlog_size = 10000;
@@ -34,14 +35,19 @@ io.set('log level', 2);
 
 io.sockets.on('connection', function(client){
   var filename;
+  var tail;
   client.json.send( { logs : logs } );
   client.on("message",function(message){
     if(message.log){
       // Stop watching the last file and send the new one
+
+      if(tail) tail.kill()
+
       fs.unwatchFile(filename);
       filename = log_dir + message.log;
       client.json.send({filename: filename});
-	  client.json.send({clear:true});
+      
+      client.json.send({clear:true});
       // send some back log
       fs.stat(filename,function(err,stats){
         if (err) throw err;
@@ -59,17 +65,15 @@ io.sockets.on('connection', function(client){
       });
 
       // watch the file now
-      fs.watchFile(filename, function(curr, prev) {
-        if(prev.size > curr.size) return {clear:true};
-        var stream = fs.createReadStream(filename, { start: prev.size, end: curr.size});
-        stream.addListener("data", function(lines) {
-          client.json.send({ tail : lines.toString('utf-8').split("\n") });
-        });
+      tail = spawn('tail', ['--follow=name', filename]);
+
+      tail.stdout.on('data', function (lines) {
+        client.json.send({ tail : lines.toString('utf-8').split("\n") });
       });
 
       // stop watching the file
       client.on("disconnect",function(){
-        fs.unwatchFile(filename);
+        tail.kill()
       });
     }
   });
