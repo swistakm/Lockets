@@ -34,24 +34,36 @@
       0% { background-color: rgba(255,255,0,0.2); }
       100% { background-color: rgba(0,0,0,0); }
     }
+   #click{ }
+   #click.down{
+     background: #888;
+   }
+
   </style>
 </head>
 <body>
   <div id="selector"><select><option value="" selected>-- select a log --</option></select></div>
+  <button id="click">Lock scroll</button>
   <div id="info" class="trebuchet"></div>
   <ol id="tail" class="monospace selection"></ol>
   <script type="text/javascript">
+
   (function() {
+
+    var floater = true;
     var lines = 0, notice = $("#info"), buffer = $('#tail');
     function rescale(){
       $("#tail").height($(window).height()-120);
     }
+
     rescale();
     $(window).resize(rescale);
     var socket  = io.connect();
+
     socket.on('connect', function() {
       console.log('Connected');
     });
+
     socket.on('message', function(message) {
       if (message.logs){
         var selector = $("#selector select");
@@ -77,14 +89,21 @@
           li.text(entry);
           buffer.append(li);
         });
-        
+        if (floater){
         buffer.scrollTop(lines*100)
+        }
         lines = lines + message.tail.length;
       }else if(message.clear) {
         $('#tail').empty();
       }else console.log(message);
     });
+
+    $('#click').click(function(){
+      floater = !floater;
+      $(this).toggleClass("down");
+    });
   })();
+
   </script>
 </body>
 </html>
