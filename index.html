@@ -14,13 +14,13 @@
     .monospace{font-family: Monaco,"Bitstream Vera Sans Mono","Lucida Console",Terminal,monospace;}
     .selection::selection , .selection *::selection{background: #EEE;color:#000;border-color:#000; text-shadow:#fff 0 0 2px;}
     .selection::-moz-selection , .selection *::-moz-selection{background: #EEE;color:#000;border-color:#000; text-shadow:#fff 0 0 2px;}
-    
+
     ::-webkit-scrollbar {width: 6px;}
     ::-webkit-scrollbar-track-piece { border-radius: 3px; }
     ::-webkit-scrollbar-thumb{ background: #555; width: 5px; border-radius: 10px; opacity: 0.2;}
     ol:hover::-webkit-scrollbar-thumb { background-color: #ccc; opacity: 1.0;}
     #tail li:hover { background:#000; }
-    
+
     /* Yellow-fade thanks to @snookca: http://snook.ca/archives/html_and_css/yellow-fade-technique-css-animations */
     #tail li {
       -webkit-animation: target-fade 3s 1;
@@ -44,6 +44,9 @@
 <body>
   <div id="selector"><select><option value="" selected>-- select a log --</option></select></div>
   <button id="click">Lock scroll</button>
+
+  <input type="text" id="filter_regexp" size=15 value="" placeholder="regular expression">
+
   <div id="info" class="trebuchet"></div>
   <ol id="tail" class="monospace selection"></ol>
   <script type="text/javascript">
@@ -53,7 +56,7 @@
     var floater = true;
     var lines = 0, notice = $("#info"), buffer = $('#tail');
     function rescale(){
-      $("#tail").height($(window).height()-120);
+      buffer.height($(window).height()-120);
     }
 
     rescale();
@@ -66,7 +69,7 @@
 
     socket.on('message', function(message) {
       if (message.logs){
-        var selector = $("#selector select");
+        var selector = $("#selector").find("select");
         $.each(message.logs,function(){
           var log = new Option(this,this);
           if ($.browser.msie) selector[0].add(log);
@@ -102,6 +105,21 @@
       floater = !floater;
       $(this).toggleClass("down");
     });
+
+    $('#filter_regexp').bind("input", function(){
+        var regexp = $("#filter_regexp").val();
+
+        buffer.find('li').each(function(){
+            if (regexp==""){
+                this.style.backgroundColor = "#444444";
+            } else if (this.innerText.match(regexp)){
+                this.style.backgroundColor = "#880000";
+            } else {
+                this.style.backgroundColor = "#444444";
+            }
+        });
+    });
+
   })();
 
   </script>
