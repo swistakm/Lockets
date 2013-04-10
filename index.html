@@ -113,8 +113,8 @@
 </select></div>
 <button id="click">Lock scroll</button>
 
-<input type="text" id="filter_regexp" size=15 value="" placeholder="regular expression">
-
+<input type="text" id="highlight_regexp" size=15 value="" placeholder="highlight expression">
+<input type="text" id="filter_regexp" size=15 value="" placeholder="filter expression">
 <div id="info" class="trebuchet"></div>
 <ol id="tail" class="monospace selection"></ol>
 <script type="text/javascript">
@@ -137,6 +137,8 @@
         });
 
         socket.on('message', function (message) {
+            var regexp = $("#filter_regexp").val();
+
             if (message.logs) {
                 var selector = $("#selector").find("select");
                 $.each(message.logs, function () {
@@ -156,10 +158,11 @@
                 notice.html('watching ' + message.filename);
             } else if (message.tail) {
                 message.tail.forEach(function (entry) {
-                    if (!entry) return;
-                    var li = $('<li>');
-                    li.text(entry);
-                    buffer.append(li);
+                    if (entry && (entry.match(regexp) || entry=="") ){
+                        var li = $('<li>');
+                        li.text(entry);
+                        buffer.append(li);
+                    }
                 });
                 if (floater) {
                     buffer.scrollTop(lines * 100)
@@ -175,8 +178,8 @@
             $(this).toggleClass("down");
         });
 
-        $('#filter_regexp').bind("input", function () {
-            var regexp = $("#filter_regexp").val();
+        $('#highlight_regexp').bind("input", function () {
+            var regexp = $("#highlight_regexp").val();
 
             buffer.find('li').each(function () {
                 if (regexp == "") {
